@@ -1,6 +1,8 @@
 require 'spec_helper_lite'
+require 'date'
 stub_module 'ActiveModel::Conversion'
 stub_module 'ActiveModel::Naming'
+
 require_relative '../../app/models/post'
 require_relative '../../app/models/blog'
 
@@ -40,6 +42,36 @@ RSpec.describe Post do
     it 'adds the post to the blog' do
       expect(blog).to receive(:add_entry).with(subject)
       subject.publish
+    end
+  end
+
+  describe '#pubdate' do
+    context 'before publishing' do
+      it 'is blank' do
+        expect(subject.pubdate).to be_nil
+      end
+    end
+
+    context 'after publishing' do
+      let(:now) { DateTime.now } # Pin the current time so we can assert on it.
+
+      before(:each) do
+        blog = double
+        allow(blog).to receive(:add_entry)
+        subject.blog = blog
+
+        clock = double
+        allow(clock).to receive(:now).and_return(now)
+        subject.publish(clock)
+      end
+
+      it 'is a datetime' do
+        expect(subject.pubdate.class).to eq(DateTime)
+      end
+
+      it 'is the current time' do
+        expect(subject.pubdate).to eq(now)
+      end
     end
   end
 end
