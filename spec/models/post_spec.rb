@@ -1,4 +1,6 @@
-require 'spec_helper'
+require 'spec_helper_lite'
+stub_module 'ActiveModel::Conversion'
+stub_module 'ActiveModel::Naming'
 require_relative '../../app/models/post'
 require_relative '../../app/models/blog'
 
