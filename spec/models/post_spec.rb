@@ -1,4 +1,5 @@
 require 'spec_helper_lite'
+require 'active_model'
 require 'date'
 stub_module 'ActiveModel::Conversion'
 stub_module 'ActiveModel::Naming'
@@ -7,9 +8,10 @@ require_relative '../../app/models/post'
 require_relative '../../app/models/blog'
 
 RSpec.describe Post do
-  subject { Post.new }
+  subject { Post.new(title: 'mytitle', body: 'mybody') }
 
   it 'starts with blank attributes' do
+    subject = Post.new
     expect(subject.title).to be_nil
     expect(subject.body).to be_nil
   end
@@ -30,18 +32,45 @@ RSpec.describe Post do
   end
 
   it 'supports setting attributes in the initializer' do
-    subject = Post.new(title: 'mytitle', body: 'mybody')
     expect(subject.title).to eq('mytitle')
     expect(subject.body).to eq('mybody')
   end
 
+  it 'is not valid with a blank title' do
+    [nil, '', ' '].each do |bad_title|
+      subject.title = bad_title
+      expect(subject).not_to be_valid
+    end
+  end
+
+  it 'is valid with a non-blank title' do
+    subject.title = 'x'
+    expect(subject).to be_valid
+  end
+
   describe '#publish' do
     let(:blog) { double }
-    before(:each) { subject.blog = blog }
+    before(:each) do
+      subject.blog = blog
+      allow(blog).to receive(:add_entry)
+    end
 
     it 'adds the post to the blog' do
       expect(blog).to receive(:add_entry).with(subject)
       subject.publish
+    end
+
+    context 'given an invalid post' do
+      before(:each) { subject.title = nil }
+
+      it 'wont add the post to the blog' do
+        expect(blog).not_to receive(:add_entry)
+        subject.publish
+      end
+
+      it 'retuns false' do
+        expect(subject.publish).to be_falsey
+      end
     end
   end
 
