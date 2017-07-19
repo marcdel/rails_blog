@@ -17,6 +17,10 @@ class Post
     blog.add_entry(self)
   end
 
+  def picture?
+    image_url.present?
+  end
+
   # Make rails form helpers happy
   def persisted?
     false
